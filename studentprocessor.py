@@ -1,22 +1,55 @@
 import csv
 from abc import ABC, abstractmethod
 
+# Read the CSV file and create student objects
+def load_students(filename):
+    students = []
 
-# Task 6: Flexible method interface (method overloading equivalent)
-def calculate_average(*marks):
-    """Calculate an average from any number of subject marks."""
-    if not marks:
-        raise ValueError("At least one mark is required.")
+    with open(filename, mode="r", newline="", encoding="utf-8-sig") as file:
+        reader = csv.DictReader(file)
 
-    if any(not isinstance(mark, (int, float)) or isinstance(mark, bool)
-           for mark in marks):
-        raise TypeError("All marks must be numbers.")
+        required_columns = {
+            "StudentID", "FName", "LName", "Programme",
+            "Math", "English", "Science"
+        }
 
-    if any(mark < 0 or mark > 100 for mark in marks):
-        raise ValueError("Marks must be between 0 and 100.")
+        if not reader.fieldnames or not required_columns.issubset(
+            reader.fieldnames
+        ):
+            raise ValueError("CSV file is missing required columns.")
 
-    return sum(marks) / len(marks)
+        for row in reader:
+            marks = {
+                "Math": float(row["Math"]),
+                "English": float(row["English"]),
+                "Science": float(row["Science"])
+            }
 
+            # Create scholarship objects for students averaging at least 85
+            if calculate_average(*marks.values()) >= 85:
+                student = ScholarshipStudent(
+                    row["StudentID"],
+                    row["FName"],
+                    row["LName"],
+                    row["Programme"],
+                    marks,
+                    scholarship_amount=50000
+                )
+            else:
+                student = AIUStudent(
+                    row["StudentID"],
+                    row["FName"],
+                    row["LName"],
+                    row["Programme"],
+                    marks
+                )
+
+            students.append(student)
+
+    if not students:
+        raise ValueError("The CSV file contains no student records.")
+
+    return students
 
 # Task 2: Abstract base class, encapsulation and abstraction
 class Student(ABC):
@@ -96,6 +129,21 @@ class Student(ABC):
     def get_student_type(self):
         """Subclasses must provide their own student type."""
         pass
+    
+# Task 6: Flexible method interface (method overloading equivalent)
+def calculate_average(*marks):
+    """Calculate an average from any number of subject marks."""
+    if not marks:
+        raise ValueError("At least one mark is required.")
+
+    if any(not isinstance(mark, (int, float)) or isinstance(mark, bool)
+           for mark in marks):
+        raise TypeError("All marks must be numbers.")
+
+    if any(mark < 0 or mark > 100 for mark in marks):
+        raise ValueError("Marks must be between 0 and 100.")
+
+    return sum(marks) / len(marks)
 
 
 # Task 2: Inheritance and implementation of the abstract method
@@ -218,57 +266,6 @@ def generate_report(students, analyzer):
     print(f"Overall Class Average: {analyzer.class_average():.2f}")
     print(f"Total Students: {len(students)}")
     print("=" * 65)
-
-
-# Read the CSV file and create student objects
-def load_students(filename):
-    students = []
-
-    with open(filename, mode="r", newline="", encoding="utf-8-sig") as file:
-        reader = csv.DictReader(file)
-
-        required_columns = {
-            "StudentID", "FName", "LName", "Programme",
-            "Math", "English", "Science"
-        }
-
-        if not reader.fieldnames or not required_columns.issubset(
-            reader.fieldnames
-        ):
-            raise ValueError("CSV file is missing required columns.")
-
-        for row in reader:
-            marks = {
-                "Math": float(row["Math"]),
-                "English": float(row["English"]),
-                "Science": float(row["Science"])
-            }
-
-            # Create scholarship objects for students averaging at least 85
-            if calculate_average(*marks.values()) >= 85:
-                student = ScholarshipStudent(
-                    row["StudentID"],
-                    row["FName"],
-                    row["LName"],
-                    row["Programme"],
-                    marks,
-                    scholarship_amount=50000
-                )
-            else:
-                student = AIUStudent(
-                    row["StudentID"],
-                    row["FName"],
-                    row["LName"],
-                    row["Programme"],
-                    marks
-                )
-
-            students.append(student)
-
-    if not students:
-        raise ValueError("The CSV file contains no student records.")
-
-    return students
 
 
 # Main program
